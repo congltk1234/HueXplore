@@ -19,7 +19,7 @@ HueXplore is an application designed to assist independent travelers in creating
 
 - **Framework/Library**: Streamlit, React
 
-    <img src="assests\st.png" width="70"/>, <img src="assests\rct.png" width="30"/>
+    <img src="assests\st.png" width="50"/>, <img src="assests\rct.png" width="30"/>
 
 
 - **Database**: MongoDB
