@@ -1,4 +1,5 @@
 # HueXplore
+<img src="assests\bg.png" width=""/>
 
 ## Overview
 HueXplore is an application designed to assist independent travelers in creating personalized travel planners for their visit to Huế, Vietnam. The app utilizes Python and JavaScript languages, along with Streamlit and React frameworks, to provide an interactive and user-friendly experience.
@@ -12,5 +13,15 @@ HueXplore is an application designed to assist independent travelers in creating
 
 ## Technologies Used
 - **Programming Language**: Python, TypeScript
+
+
+    <img src="assests\py.png" width="30"/>, <img src="assests\ts.png" width="30"/>
+
 - **Framework/Library**: Streamlit, React
+
+    <img src="assests\st.png" width="30"/>, <img src="assests\rct.png" width="30"/>
+
+
 - **Database**: MongoDB
+
+    <img src="assests\mg.png" width="50"/>
