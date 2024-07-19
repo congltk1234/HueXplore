@@ -13,8 +13,12 @@
             display: None;
         }
         .sortable-container:nth-of-type(2) .container-body {
-            background-color: blue; 
-            padding: 20px; 
+            background-image: url('timeline.jpg');
+            background-position: left top; /* Đặt ảnh nền về phía bên trái trên */
+            background-size: auto; /* Giữ nguyên kích thước của ảnh */
+            background-repeat: no-repeat; /* Không lặp lại ảnh nền */
+            background-color: rgb(47, 19, 19);
+            padding: 0px; 
             height: 700px;
             border-radius: 10px;
         }
@@ -29,7 +33,7 @@
             word-wrap: break-word;
             font-size: larger;
             height: 100px;
-            margin-left: 50px;
+            margin-left: 80px;
         }
         .sortable-component .vertical {
             width: 70%;
