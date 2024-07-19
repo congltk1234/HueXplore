@@ -34,5 +34,14 @@ def map_result(list2, dict1):
     filtered_list.sort(key=lambda x: dict1['items'].index(x['name']))
     return filtered_list
 
+add_cafe = st.button("add cafe")
+
+if add_cafe:
+    text = "HUET"
+    sorted_items[1]["items"].append(text)
+    st.write(sorted_items[1]["items"])
+    
 gg_res = map_result(selected_items, sorted_items[1]) 
 st.write(gg_res)
+st.write(sorted_items[1]["items"])
+
