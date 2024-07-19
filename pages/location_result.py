@@ -8,36 +8,79 @@ st.markdown("Location Result")
 st.sidebar.header("Location Result")
 st.title("Grid Location")
 
-genres = [
-    "architecturalmonument", 
-    "art", 
+interests = [
     "architecture", 
-    "nature", 
-    "culture",
+    "art", 
+    "culture", 
+    "heritage", 
     "history",
-    "historicalsites",
-    "museums"
+    "market",
+    "museum",
+    "nature",
+    "wellness",
+    "ruin",
+    "workshop"
 ]
 
-data = []
+moods = [
+    "roadtrip", 
+    "vintage", 
+    "romantic", 
+    "spiritual", 
+    "city explorer",
+    "shopping",
+    "photography",
+    "beach-loving",
+    "sightseeing",
+    "cuisine",
+    "relax",
+    "entertain",
+    "memorial"
+]
 
 client = MongoClient("mongodb://localhost:27017")
 db = client["location"]
-collection = db["location"]
+collection = db["main_loc"]
 
-genre_select = st.multiselect("Select Genres", genres, key="genres")
+select_col1, select_col2 = st.columns(2)
 
-if genre_select:
-    query = {"genres": {"$all": genre_select}}
+with select_col1:
+    interests_select = st.multiselect("What is your interest", interests, key="interests")
+
+with select_col2:
+    mood_select = st.multiselect("Your moods", moods, key="moods")
+
+cfirm_btn = st.button("Confirm Selected Items")
+
+mongo_results = []
+
+query = {}
+if interests_select:
+    query["interests"] = {"$all": interests_select}
+if mood_select:
+    query["moods"] = {"$all": mood_select}
+
+names_res, img_res, coor_res, address_res = [], [], [], []
+
+if interests_select or mood_select:
     mongo_results = list(collection.find(query))
 
     for index, result in enumerate(mongo_results, start=1):
         result["order"] = index
-        data.append(result["name"])
+        names_res.append(result["name"])
+        img_res.append(result["img_url"])
+        coor_res.append(result["coordinate"])
+        address_res.append(result["address"])
 
 
-df = pd.DataFrame(list(data), columns=['Name'])
+df = pd.DataFrame({
+    "name": names_res,
+    "img": img_res,
+    "coordinate": coor_res,
+    "address": address_res
+    })
 
+selected_names = []
 selected_items = []
 
 def display_location_grid(df):
@@ -50,23 +93,31 @@ def display_location_grid(df):
     for row in rows:
         cols = st.columns(num_columns)
         for col, (index, item) in zip(cols, row.iterrows()):
-            name = item['Name']
+            name = item['name']
+            img = item['img']
             with col:
                 checkbox_value = st.checkbox(name, key=name)
+
                 if checkbox_value:
-                    if name not in selected_items:
-                        selected_items.append(name)
-                elif name in selected_items:
-                    selected_items.remove(name)
+                    if name not in selected_names:
+                        selected_names.append(name)
+                        selected_items.append(item)
+                elif name in selected_names:
+                    selected_names.remove(name)
+                    selected_items.remove(item)
+
 
                 col.markdown(f"""
                         <div style="border: 2px solid #000; padding: 10px; border-radius: 10px; background-color: #fff; height: {card_height}px; display: flex; justify-content: center; align-items: center;">
-                            <img src="https://file1.dangcongsan.vn/data/0/images/2024/04/11/upload_673/hue-imperial-gate-1024x683-754-17016811818591749547652.png" style="max-width: 215px; min-height: 150px; max-height: 150px;">
+                            <img src="{img}" style="max-width: 215px; min-height: 150px; max-height: 150px;">
                         </div>
                 """, unsafe_allow_html=True)
 
+                
 display_location_grid(df)  
 
 if selected_items:
-    st.write("location_result")
-    st.write(selected_items)
+    if cfirm_btn:
+        st.session_state["selected_names"] = selected_names
+        st.session_state["selected_items"] = selected_items
+        st.experimental_set_query_params(page="planner")

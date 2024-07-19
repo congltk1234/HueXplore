@@ -10,45 +10,29 @@ st.sidebar.header("Tourism Planner")
 
 st.title("Planner")
 
-data = []
-
-genres = [
-    "architecturalmonument", 
-    "art", 
-    "architecture", 
-    "nature", 
-    "culture",
-    "history",
-    "historicalsites",
-    "museums"
-]
-
-client = MongoClient("mongodb://localhost:27017")
-db = client["location"]
-collection = db["location"]
-
-
-
-
-
 col1, col2 = st.columns(2)
 
 with col1:
-    genre_select = st.multiselect("Select Genres", genres, key="genres")
-
-    if genre_select:
-        query = {"genres": {"$all": genre_select}}
-        mongo_results = list(collection.find(query))
-
-        for index, result in enumerate(mongo_results, start=1):
-            result["order"] = index
-            data.append(result["name"])
-
-    items = [
-        {'header': 'location_results', 'items': data},
+    
+    if "selected_items" in st.session_state:
+        selected_items = st.session_state["selected_items"]
+        selected_names = st.session_state["selected_names"]
+        items = [
+        {'header': 'location_results', 'items': selected_names},
         {'header': 'planner_results', 'items': []},
     ]   
-    sorted_items = sort_items(items, multi_containers=True, direction="vertical")
+        sorted_items = sort_items(items, multi_containers=True, direction="vertical")
+    else:
+        st.write("No items selected.")
 
 with col2:
     st.markdown("### Map")
+
+def map_result(list2, dict1):
+    item_set = set(dict1['items'])
+    filtered_list = [item for item in list2 if item['name'] in item_set]
+    filtered_list.sort(key=lambda x: dict1['items'].index(x['name']))
+    return filtered_list
+
+gg_res = map_result(selected_items, sorted_items[1]) 
+st.write(gg_res)
