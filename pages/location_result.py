@@ -2,10 +2,12 @@ import streamlit as st
 from pymongo import MongoClient
 import pandas as pd
 
-st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide")
+# st.session_state.sidebar_state = 
+st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide",
+                    initial_sidebar_state='collapsed')
+st.sidebar.header("Location Result")
 
 st.markdown("Location Result")
-st.sidebar.header("Location Result")
 st.title("Grid Location")
 
 interests = [
@@ -39,8 +41,8 @@ moods = [
 ]
 
 client = MongoClient("mongodb://localhost:27017")
-db = client["location"]
-collection = db["main_loc"]
+db = client["unihack"]
+collection = db["locations"]
 
 select_col1, select_col2 = st.columns(2)
 
@@ -60,7 +62,7 @@ if interests_select:
 if mood_select:
     query["moods"] = {"$all": mood_select}
 
-names_res, img_res, coor_res, address_res = [], [], [], []
+names_res, img_res, coor_res, address_res, ggmap = [], [], [], [], []
 
 if interests_select or mood_select:
     mongo_results = list(collection.find(query))
@@ -71,17 +73,20 @@ if interests_select or mood_select:
         img_res.append(result["img_url"])
         coor_res.append(result["coordinate"])
         address_res.append(result["address"])
+        ggmap.append(result["gg_map"])
 
 
 df = pd.DataFrame({
     "name": names_res,
     "img": img_res,
     "coordinate": coor_res,
-    "address": address_res
+    "address": address_res,
+    "gg_map": ggmap,
+
     })
 
-selected_names = []
-selected_items = []
+st.session_state["selected_names"] = []
+st.session_state["selected_items"] = []
 
 def display_location_grid(df):
     card_height = 200
@@ -99,12 +104,12 @@ def display_location_grid(df):
                 checkbox_value = st.checkbox(name, key=name)
 
                 if checkbox_value:
-                    if name not in selected_names:
-                        selected_names.append(name)
-                        selected_items.append(item)
-                elif name in selected_names:
-                    selected_names.remove(name)
-                    selected_items.remove(item)
+                    if name not in st.session_state["selected_names"]:
+                        st.session_state["selected_names"].append(name)
+                        st.session_state["selected_items"].append(item)
+                elif name in st.session_state["selected_names"]:
+                    st.session_state["selected_names"].remove(name)
+                    st.session_state["selected_items"].remove(item)
 
 
                 col.markdown(f"""
@@ -116,8 +121,8 @@ def display_location_grid(df):
                 
 display_location_grid(df)  
 
-if selected_items:
-    if cfirm_btn:
-        st.session_state["selected_names"] = selected_names
-        st.session_state["selected_items"] = selected_items
-        st.experimental_set_query_params(page="planner")
+if cfirm_btn:
+    # st.session_state["selected_names"] = selected_names
+    # st.session_state["selected_items"] = selected_items
+    st.experimental_set_query_params(page="planner")
+    st.switch_page("pages/planner.py")

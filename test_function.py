@@ -24,9 +24,9 @@ genres = [
     "museums"
 ]
 
-client = MongoClient("mongodb://localhost:27017")
-db = client["location"]
-collection = db["location"]
+# client = MongoClient("mongodb://localhost:27017")
+# db = client["location"]
+# collection = db["location"]
 
 genre_select = st.multiselect("Select Genres", genres, key="genres")
 
