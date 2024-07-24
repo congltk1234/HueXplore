@@ -59,5 +59,5 @@ if cfirm_btn:
     st.session_state["moods_select"] = moods_select
     st.session_state["is_interests"] = True if len(interests_select) > 0 else False
     st.session_state["is_moods"] = True if len(moods_select) > 0 else False
-    st.experimental_set_query_params(page="location_result")
-    st.switch_page("pages/location_result.py")
+    st.experimental_set_query_params(page="locations")
+    st.switch_page("pages/locations.py")
