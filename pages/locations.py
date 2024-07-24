@@ -45,8 +45,9 @@ def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
     df = df.reset_index(drop=True)
 
     n= len(place_dict)
+    
     # index =[[int(i+n*0.1), int(i+n*0.3)] for i in range(0,1980, n)]
-    index =[[i, int(i+n*0.3)] for i in range(0,1980, n)]
+    index =[[i, int(i+n*0.3)] for i in range(0,n*(n-1), n)]
     new_index = []
     for i in index:
         for j in range(*i):
@@ -63,7 +64,11 @@ def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
         if len(path)==leng_path:
             # print(path)
             route = df_mg[df_mg.name.isin(path) == True]
+            sorterIndex = dict(zip(path, range(len(path))))
+            route['order'] = route['name'].map(sorterIndex)
+            route.sort_values(['order'],inplace = True)
             recommend_routes.append(route.to_dict(orient='records'))
+
             count+=1
         if count==k:
             break 
