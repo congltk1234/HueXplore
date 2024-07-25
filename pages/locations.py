@@ -6,7 +6,6 @@ import networkx as nx
 import osmnx as ox
 from shapely import Point
 
-# https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.simple_paths.shortest_simple_paths.html
 from itertools import islice
 def k_shortest_paths(G, source, target, k, weight=None):
     return list(
@@ -158,9 +157,12 @@ if "origin_object" not in st.session_state:
 if "destination_object" not in st.session_state:
     st.session_state["destination_object"] = None
 
-list_object = []
+if "bruh" not in st.session_state:
+    st.session_state["bruh"] = []
 
-
+def select_candidate_points(line_index):
+    line_objects = st.session_state["recommend_routes"][line_index]
+    st.session_state["candidate_points"] = line_objects
 
 def display_location_grid(df):
     card_height = 300
@@ -216,49 +218,45 @@ def display_location_grid(df):
 display_location_grid(df)
 
 with st_fixed_container(mode="fixed", position="top", border=True):
-    fixed_col1, fixed_col2= st.columns(2)
+
+    fixed_col1, fixed_col2 = st.columns([2, 8])
+
     with fixed_col1:
-        # st.markdown(f"""
-        #     <p style = "color: red; font-size: larger; font-weight: 600">Origin: {st.session_state['origin_point']}</p>
-        # """,
-        #     unsafe_allow_html=True,
-        # )
+
         st.markdown(f"""
-            <style>
-                @media only screen and (max-width: 600px) {{
-                    .origin, .destination {{
-                        font-size: 10px;
+                <style>
+                    @media only screen and (max-width: 600px) {{
+                        .origin, .destination {{
+                            font-size: 10px;
+                        }}
                     }}
-                }}
-                .origin {{
-                    color: red; 
-                    font-size: larger; 
-                    font-weight: 600;
-                }}
-                .destination {{
-                    color: green; 
-                    font-size: larger; 
-                    font-weight: 600;
-                }}
-            </style>
-            <p class="origin">Origin: {st.session_state['origin_point']}</p>
-            <p class="destination">Destination: {st.session_state['destination_point']}</p>
-        """,
-            unsafe_allow_html=True,
-        )
-        # st.markdown(f"""
-        #     <p style = "color: green; font-size: larger; font-weight: 600">Destination: {st.session_state['destination_point']}</p>
-        # """,
-        #     unsafe_allow_html=True,
-        # )
+                    .origin {{
+                        color: red; 
+                        font-size: larger; 
+                        font-weight: 600;
+                    }}
+                    .destination {{
+                        color: green; 
+                        font-size: larger; 
+                        font-weight: 600;
+                    }}
+                </style>
+                <p class="origin">Origin: {st.session_state['origin_point']}</p>
+                <p class="destination">Destination: {st.session_state['destination_point']}</p>
+            """, unsafe_allow_html=True,
+            )
+        
+        go_btn = st.button("Xuất phát")
+
     with fixed_col2:
         if (isinstance(st.session_state["origin_point"], str)) and (isinstance(st.session_state["destination_point"], str)):
+
             css = """
                 <style>
                     .flow-container {
                         display: flex;
                         align-items: center;
-                        margin-bottom: 0px;
+                        margin-bottom: 10px;
                     }
                     .flow-container div {
                         padding: 5px 10px;
@@ -272,10 +270,15 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                         border: none;
                         margin-right: 0;
                     }
+                    .add-line-button {
+                        margin-bottom: 10px;
+                    }
                 </style>
             """
+
             st.markdown(css, unsafe_allow_html=True)
-            for lobj in st.session_state["recommend_routes"]:
+
+            for line_index, lobj in enumerate(st.session_state["recommend_routes"]):
                 display_string = ""
                 for i, obj in enumerate(lobj):
                     flow = "→" if i != 0 else ""
@@ -286,11 +289,17 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                 html_content = f"""
                     <div class="flow-container">{display_string}</div>
                 """
-                st.markdown(html_content, unsafe_allow_html=True)
-                
-            map_btn = st.button("Confirm List")
+                push_col1, push_col2 = st.columns([2, 8])
+                with push_col2:
+                    st.markdown(html_content, unsafe_allow_html=True)
+                with push_col1:
+                    push_btn = st.button("Chọn lịch trình này", key=f"line_{line_index}", use_container_width=True)
+                if push_btn:
+                    select_candidate_points(line_index)
+                    st.experimental_set_query_params(page="map")
+                    st.switch_page("pages/map.py")
             
-if map_btn:
-    st.session_state["candidate_point"] = df
+if go_btn:
+    st.session_state["candidate_points"] = [st.session_state["origin_object"], st.session_state["destination_object"]]
     st.experimental_set_query_params(page="map")
     st.switch_page("pages/map.py")
