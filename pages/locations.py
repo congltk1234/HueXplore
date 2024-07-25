@@ -5,13 +5,17 @@ from fixed_header import st_fixed_container
 import networkx as nx 
 import osmnx as ox
 from shapely import Point
+import requests
 
+# https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.simple_paths.shortest_simple_paths.html
 from itertools import islice
 def k_shortest_paths(G, source, target, k, weight=None):
     return list(
         islice(nx.shortest_simple_paths(G, source, target, weight=weight), k)
     )
 
+domain = "http://localhost"
+port = ":5000"
 
 # Configure page settings
 st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
@@ -107,16 +111,10 @@ moods = [
     "cuisine", "relax", "entertain", "memorial"
 ]
 
-client = MongoClient("mongodb://localhost:27017")
-db = client["unihack"]
-collection = db["locations"]
-
 is_moods = st.session_state.get("is_moods", False)
 is_interests = st.session_state.get("is_interests", False)
 moods_select = st.session_state.get("moods_select", [])
 interests_select = st.session_state.get("interests_select", [])
-
-mongo_results = []
 
 query = {}
 if is_interests:
@@ -124,27 +122,22 @@ if is_interests:
 if is_moods:
     query["moods"] = {"$all": moods_select}
 
-names_res, img_res, coor_res, ggmap_res, interests_res, moods_res = [], [], [], [], [], []
+res_obj = {
+    "is_moods": is_moods,
+    "is_interests": is_interests,
+    "moods_select": moods_select,
+    "interests_select": interests_select,
+}
 
-if interests_select or moods_select:
-    mongo_results = list(collection.find(query))
-
-    for index, result in enumerate(mongo_results, start=1):
-        result["order"] = index
-        names_res.append(result["name"])
-        img_res.append(result["img_url"])
-        coor_res.append(result["coordinate"])
-        ggmap_res.append(result["gg_map"])
-        interests_res.append(result["interests"])
-        moods_res.append(result["moods"])
+response = requests.post(domain + port + "/ind-loc", json = res_obj)
 
 df = pd.DataFrame({
-    "name": names_res,
-    "img": img_res,
-    "coordinate": coor_res,
-    "gg_map": ggmap_res,
-    "interests": interests_res,
-    "moods": moods_res
+    "name": response.json()["names_res"],
+    "img": response.json()["img_res"],
+    "coordinate": response.json()["coor_res"],
+    "gg_map": response.json()["ggmap_res"],
+    "interests": response.json()["interests_res"],
+    "moods": response.json()["moods_res"]
 })
 
 # Initialize session state for start and end selections
@@ -218,7 +211,7 @@ def display_location_grid(df):
 display_location_grid(df)
 
 with st_fixed_container(mode="fixed", position="top", border=True):
-
+    
     fixed_col1, fixed_col2 = st.columns([2, 8])
 
     with fixed_col1:
@@ -245,12 +238,9 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                 <p class="destination">Destination: {st.session_state['destination_point']}</p>
             """, unsafe_allow_html=True,
             )
-        
         go_btn = st.button("Xuất phát")
-
     with fixed_col2:
         if (isinstance(st.session_state["origin_point"], str)) and (isinstance(st.session_state["destination_point"], str)):
-
             css = """
                 <style>
                     .flow-container {
@@ -275,7 +265,6 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                     }
                 </style>
             """
-
             st.markdown(css, unsafe_allow_html=True)
 
             for line_index, lobj in enumerate(st.session_state["recommend_routes"]):
@@ -299,7 +288,10 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                     st.experimental_set_query_params(page="map")
                     st.switch_page("pages/map.py")
             
+            
 if go_btn:
     st.session_state["candidate_points"] = [st.session_state["origin_object"], st.session_state["destination_object"]]
+    st.session_state["interests_can"] = st.session_state["origin_object"]["interests"] + st.session_state["destination_object"]["interests"]
+    st.session_state["moods_can"] = st.session_state["origin_object"]["moods"] + st.session_state["destination_object"]["moods"]
     st.experimental_set_query_params(page="map")
     st.switch_page("pages/map.py")
