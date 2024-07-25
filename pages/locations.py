@@ -71,7 +71,6 @@ def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
             route['order'] = route['name'].map(sorterIndex)
             route.sort_values(['order'],inplace = True)
             recommend_routes.append(route.to_dict(orient='records'))
-
             count+=1
         if count==k:
             break 
@@ -137,7 +136,8 @@ df = pd.DataFrame({
     "coordinate": response.json()["coor_res"],
     "gg_map": response.json()["ggmap_res"],
     "interests": response.json()["interests_res"],
-    "moods": response.json()["moods_res"]
+    "moods": response.json()["moods_res"],
+    "node_id": response.json()["node_id"]
 })
 
 # Initialize session state for start and end selections
@@ -150,9 +150,13 @@ if "origin_object" not in st.session_state:
 if "destination_object" not in st.session_state:
     st.session_state["destination_object"] = None
 
+if "interests_can" not in st.session_state:
+    st.session_state["interests_can"] = []
+if "moods_can" not in st.session_state:
+    st.session_state["moods_can"] = []
 if "bruh" not in st.session_state:
     st.session_state["bruh"] = []
-
+    
 def select_candidate_points(line_index):
     line_objects = st.session_state["recommend_routes"][line_index]
     st.session_state["candidate_points"] = line_objects
@@ -201,6 +205,7 @@ def display_location_grid(df):
                         st.session_state["origin_object"] = item
                         if isinstance(st.session_state["destination_point"], str):
                             recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
+                            
                 with col_end:
                     if st.button(f"Set as End", key=f"end_{name}"):
                         st.session_state["destination_point"] = name
@@ -285,9 +290,13 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                     push_btn = st.button("Chọn lịch trình này", key=f"line_{line_index}", use_container_width=True)
                 if push_btn:
                     select_candidate_points(line_index)
+                    for i in st.session_state["candidate_points"]:
+                        st.session_state["interests_can"] += i["interests"]
+                        st.session_state["moods_can"] += i["moods"]
+                    # st.session_state["moods_can"] = st.session_state["origin_object"]["moods"] + st.session_state["destination_object"]["moods"]
                     st.experimental_set_query_params(page="map")
                     st.switch_page("pages/map.py")
-            
+                    
             
 if go_btn:
     st.session_state["candidate_points"] = [st.session_state["origin_object"], st.session_state["destination_object"]]
