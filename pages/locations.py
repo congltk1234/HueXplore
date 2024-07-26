@@ -14,8 +14,7 @@ def k_shortest_paths(G, source, target, k, weight=None):
         islice(nx.shortest_simple_paths(G, source, target, weight=weight), k)
     )
 
-domain = "http://localhost"
-port = ":5000"
+url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
 
 # Configure page settings
 st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
@@ -128,7 +127,7 @@ res_obj = {
     "interests_select": interests_select,
 }
 
-response = requests.post(domain + port + "/ind-loc", json = res_obj)
+response = requests.post(url + "/ind-loc", json = res_obj)
 
 df = pd.DataFrame({
     "name": response.json()["names_res"],

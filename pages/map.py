@@ -5,6 +5,7 @@ import folium
 import json
 from folium import IFrame, plugins
 from streamlit_folium import st_folium
+from st_draggable_list import DraggableList
 
 import networkx as nx
 import osmnx as ox
@@ -15,8 +16,7 @@ import streamlit as st
 import pandas as pd
 import requests
 
-domain = "http://localhost"
-port = ":5000"
+url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
 
 if "candidate_points" in st.session_state:
     candidates = st.session_state["candidate_points"]
@@ -26,17 +26,41 @@ if "moods_can" in st.session_state:
     moods_can = st.session_state["moods_can"]
 place_show = st.session_state.get("place_show", [])
 
+def update_orders(data):
+    for index, item in enumerate(data):
+        item["order"] = index + 1
+    return data
+
+def create_draggable_list():
+    return DraggableList(st.session_state.data, width="100%")
+
+initial_data = candidates
+
+for index, item in enumerate(initial_data):
+    item["order"] = index + 1
+
+if "data" not in st.session_state:
+    st.session_state.data = initial_data
+
 map_col1, map_col2 = st.columns([5, 5])
 with map_col1:
     with st.container():
-        st.write(candidates)
+
+        
+        dynamic_list = create_draggable_list()
+
+        if dynamic_list is not None:
+            st.session_state.data = update_orders(dynamic_list)
+        else:
+            dynamic_list = st.session_state.data
+
     with st.container(height=800):
         res_obj = {
             "moods_can": moods_can,
             "interests_can": interests_can,
             "name_res": [i["name"] for i in candidates]
         }
-        response = requests.post(domain + port + "/dynamic-loc", json = res_obj)
+        response = requests.post(url+ "/dynamic-loc", json = res_obj)
 
         df = pd.DataFrame({
             "name": response.json()["names_res"],
@@ -51,7 +75,7 @@ with map_col1:
         df = df.sort_values(by='isshow', ascending=False)
         st.session_state["place_show"] = df[df['isshow']==True].to_dict(orient='records')
         def display_additional_grid(df):
-            card_height = 160
+            card_height = 150
             num_columns = 4
             num_rows = len(df)
             rows = [df.iloc[i:i + num_columns] for i in range(0, num_rows, num_columns)]
@@ -81,12 +105,19 @@ with map_col1:
                         """,  unsafe_allow_html=True)
                         col.markdown(f"""
                                 <div id = "item{index}" style="padding: 2px; height: {card_height}px; display: flex; justify-content: left; align-items: left;">
-                                    <img src="{img}" style="max-width: 250px; min-width: 250px; min-height: 150px; max-height: 150px;">
+                                    <img src="{img}" style="max-width: 220px; min-width: 220px; min-height: 140px; max-height: 140px;">
                                 </div>
                         """, unsafe_allow_html=True)
-                        add_btn =  st.button(f"Thêm", key=f"add_{name}")      
+                        add_btn =  st.button(f"Thêm", key=f"add_{name}")
+                        if add_btn:
+                            item_dict = item.to_dict()
+                            # st.session_state["candidate_points"].append(item_dict)
+                            item_dict["order"] = len(st.session_state.data) + 1
+                            st.session_state.data.append(item_dict)
+                            st.session_state.data = update_orders(st.session_state.data)
+                            st.session_state["candidate_points"] = update_orders(st.session_state.data)
         display_additional_grid(df)
-
+st.write(st.session_state.data)
 import json
 start=[16.4683,107.5786]
 with map_col2:
@@ -113,7 +144,7 @@ with map_col2:
                 "origin_node": gg_res[index-1]['node_id'],
                 "destination_node": gg_res[index]['node_id'],
                 }
-                response = requests.post(domain + port + "/find-route", json = res_obj)
+                response = requests.post(url + "/find-route", json = res_obj)
                 points_list= response.json()
                 folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
                                 tooltip=f"From a to b", smooth_factor=0.1,).add_to(m)
