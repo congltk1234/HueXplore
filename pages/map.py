@@ -17,6 +17,8 @@ import pandas as pd
 import requests
 
 url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
+domain = "http://localhost"
+port = ":5000"
 
 if "candidate_points" in st.session_state:
     candidates = st.session_state["candidate_points"]
@@ -60,7 +62,8 @@ with map_col1:
             "interests_can": interests_can,
             "name_res": [i["name"] for i in candidates]
         }
-        response = requests.post(url+ "/dynamic-loc", json = res_obj)
+        # response = requests.post(url+ "/dynamic-loc", json = res_obj)
+        response = requests.post(domain + port+ "/dynamic-loc", json = res_obj)
 
         df = pd.DataFrame({
             "name": response.json()["names_res"],
@@ -144,7 +147,8 @@ with map_col2:
                 "origin_node": gg_res[index-1]['node_id'],
                 "destination_node": gg_res[index]['node_id'],
                 }
-                response = requests.post(url + "/find-route", json = res_obj)
+                # response = requests.post(url + "/find-route", json = res_obj)
+                response = requests.post(domain + port + "/find-route", json = res_obj)
                 points_list= response.json()
                 folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
                                 tooltip=f"From a to b", smooth_factor=0.1,).add_to(m)
@@ -162,6 +166,6 @@ with map_col2:
             folium.Marker(location=place['coordinate'], tooltip=name, icon=icon, popup = popup).add_to(m)
    
     folium.FitOverlays().add_to(m)
-    st_data = st_folium(m, width=1000)
+    st_data = st_folium(m, width=1000, returned_objects=[])
     
 st.write(st_data)

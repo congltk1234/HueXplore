@@ -1,17 +1,20 @@
 import streamlit as st
 import pandas as pd
-from pymongo import MongoClient
-from streamlit_sortables_local import sort_items
+# from pymongo import MongoClient
+# from streamlit_sortables_local import sort_items
 import folium
 import json
-import base64
 from folium import IFrame, plugins
 from streamlit_folium import st_folium
 
 import networkx as nx
 import osmnx as ox
+from streamlit_extras.grid import grid
+import pyautogui
 
 
+import io
+from PIL import Image
 
 st.write("this is planner")
 
@@ -34,83 +37,60 @@ st.write("this is planner")
 # st.sidebar.header("Tourism Planner")
 
 # st.title("Planner")
+m = folium.Map(location=[39.949610, -75.150282], zoom_start=16)
+folium.Marker(
+    [39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell"
+).add_to(m)
 
-# col1, col2 = st.columns(spec=[0.6, 0.4])
 
-# with col1:
-#     if "selected_items" in st.session_state:
-#         selected_items = st.session_state["selected_items"]
-#         selected_names = st.session_state["selected_names"]
-#         items = [
-#         {'header': 'location_results', 'items': selected_names},
-#         {'header': 'planner_results', 'items': []},
-#     ]   
-#         sorted_items = sort_items(items, multi_containers=True, direction="vertical")
-#     else:
-#         st.write("No items selected.")
+my_grid = grid([2, 4, 1], vertical_align="bottom")
+# Row 2:
+my_grid.selectbox("Select Country", ["Germany", "Italy", "Japan", "USA"])
+my_grid.text_input("Your name")
+my_grid.button("Send", use_container_width=True)
+    # pyautogui.hotkey("ctrl", "p")
+col1, col2 = st.columns(spec=[5,4])
 
-# def map_result(list2, dict1):
-#     item_set = set(dict1['items'])
-#     filtered_list = [item for item in list2 if item['name'] in item_set]
-#     filtered_list.sort(key=lambda x: dict1['items'].index(x['name']))
-#     return filtered_list
+with col1:
+    with st.container():
+        for i in range(4):
+            with st.expander(f"Place {i}", expanded=True):
+                inside_col1, inside_col2 = st.columns(spec=[2,8])
+                with inside_col1:
+                    st.image('assests/st.png')
+                with inside_col2:
+                    st.subheader("This is a subheader with a divider", divider="gray")
+                    long_text = "Lorem ipsum. " * 10
+                    # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
+                    st.write(long_text)
 
-# add_cafe = st.button("add cafe")
+with col2:
+    st_folium(m, width=725, returned_objects=[])
+    # đổi sang GoogleMApEngine
 
-# if add_cafe:
-#     text = "HUET"
-#     sorted_items[1]["items"].append(text)
-#     st.write(sorted_items[1]["items"])
-    
-# gg_res = map_result(selected_items, sorted_items[1]) 
-# start=[16.4683,107.5786]
+from streamlit_star_rating import st_star_rating
+stars = st_star_rating('Bạn đánh giá lộ trình này như thế nào?', 5, 0, size=60, emoticons=True, read_only=False, dark_theme=False, 
+                    #    resetButton=reset_btn, resetLabel=reset_label,
+                    #    customCSS=css_custom, on_click=function_to_run_on_click if enable_on_click else None
+                       )
 
-# # f = open('api-response2.json')
-# # data = json.load(f)
-# st.write(gg_res)
-
-# with col2:
-#     st.markdown("### Map")
-#     m = folium.Map(location=start, zoom_start=10)
-#     if len(gg_res)!=0:
-#         for index,place in enumerate(gg_res):
-#             destination_point = gg_res[index]['coordinate']
-#             if index>0:
-#                 origin_point = gg_res[index-1]['coordinate']
-#                 origin_node = ox.distance.nearest_nodes(G, float(origin_point[1]), float(origin_point[0])) 
-#                 destination_point = gg_res[index]['coordinate']
-#                 destination_node = ox.distance.nearest_nodes(G, float(destination_point[1]), float(destination_point[0]))
-#                 route_nodes = ox.routing.shortest_path(G, origin_node, destination_node, weight="length")
-#                 # route_data = data['data']['routes'][0]['legs'][index-1]['points']
-#                 # points_list = [[point['latitude'], point['longitude']] for point in route_data]
-
-#                 # print(route_nodes)
-#                 points_list = [[G.nodes[node]['y'],G.nodes[node]['x']] for node in route_nodes]
-#                 folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
-#                                 tooltip="From Shikarpur to Binaur",
-#                         smooth_factor=0.1,  #  for making poliyline straight
-#                         ).add_to(m)
-#             html_name= popup_html = f"<b>{place['name']}</b> <br/>"
-#             # popup_html = f"<b>Date:</b> {data['Date']}<br/>"
-#             popup_html += f"<b>Place:</b> {index}<br/>"
-#             # popup_html += f"<b>Time:</b> {data['Time']}<br/>"
-#             popup_html += '<b><a href="{}" target="_blank">Event Page</a></b>'.format(place['gg_map'])
-#             if  isinstance(place['img'], str):
-#                 popup_html += f'''<img src="{place['img']}">'''
-#             else:
-#                 encoded = base64.b64encode(open('biena.png', 'rb').read())
-#                 html = '<img src="data:image/png;base64,{}">'.format
-#                 popup_html += html(encoded.decode('UTF-8'))
-#             popup_iframe = folium.IFrame(width=200, height=110, html=popup_html)
-#             popup = folium.Popup(popup_iframe,  width=400, height=350)
-#             folium.Marker(location=place['coordinate'], tooltip=html_name, icon=folium.Icon(icon='stop'), popup = popup).add_to(m)
-#             # folium.Marker(location=place['coordinate'], tooltip=f'Place {index}', icon=folium.Icon(icon='play'), popup='Start').add_to(m)
-
-#     minimap = plugins.MiniMap()
-#     m.add_child(minimap)
-#     folium.FitOverlays().add_to(m)
-#     st_data = st_folium(m, width=800)
-
-# # st.write(points_list)
-# st.write(gg_res)
-
+st.markdown(
+    """
+    <style type="text/css" media="print">
+    div.page-break
+    {
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+    </style>
+    <div class="page-break">
+        <!-- Content goes here -->
+    </div>
+""",
+    unsafe_allow_html=True,
+)
+from PIL import ImageGrab
+im = ImageGrab.grab()
+# Capture a specific region (left, top, right, bottom)
+# screenshot = ImageGrab.grab(bbox=(100, 100, 500, 500))
+st.image(im)

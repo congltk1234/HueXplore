@@ -1,0 +1,10 @@
+streamlit
+folium
+networkx
+osmnx
+pandas
+shapely
+streamlit_extras
+streamlit_folium
+st-star-rating
+st_draggable_list
