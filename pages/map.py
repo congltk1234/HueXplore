@@ -18,7 +18,7 @@ import requests
 
 url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
 domain = "http://localhost"
-port = ":5000"
+port = ":8080"
 
 if "candidate_points" in st.session_state:
     candidates = st.session_state["candidate_points"]
@@ -45,10 +45,10 @@ if "data" not in st.session_state:
     st.session_state.data = initial_data
 
 map_col1, map_col2 = st.columns([5, 5])
+
+
 with map_col1:
     with st.container():
-
-        
         dynamic_list = create_draggable_list()
 
         if dynamic_list is not None:
@@ -120,13 +120,16 @@ with map_col1:
                             st.session_state.data = update_orders(st.session_state.data)
                             st.session_state["candidate_points"] = update_orders(st.session_state.data)
         display_additional_grid(df)
-st.write(st.session_state.data)
 import json
 start=[16.4683,107.5786]
 with map_col2:
-    st.markdown("### Map")
+    if st.button("Khởi hành"):
+        st.session_state["final_locations"] = st.session_state.data
+        st.experimental_set_query_params(page="planner")
+        st.switch_page("pages/planner.py")
     m = folium.Map(location=start, zoom_start=10)
-    gg_res=st.session_state["candidate_points"]
+    gg_res=st.session_state.data
+
     if len(gg_res)!=0:
         place_show = st.session_state["place_show"]
         for index,place in enumerate(place_show):
@@ -164,8 +167,8 @@ with map_col2:
             popup = folium.Popup(pub_html, max_width=220)
             icon = folium.Icon(color='red', prefix='fa',icon=f'{index+1}')
             folium.Marker(location=place['coordinate'], tooltip=name, icon=icon, popup = popup).add_to(m)
-   
+
     folium.FitOverlays().add_to(m)
-    st_data = st_folium(m, width=1000, returned_objects=[])
-    
-st.write(st_data)
+    folium.plugins.MiniMap(width=100, height=100).add_to(m)
+    st_data = st_folium(m, width=600, height=400, returned_objects=[])
+

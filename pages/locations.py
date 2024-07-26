@@ -14,14 +14,24 @@ def k_shortest_paths(G, source, target, k, weight=None):
         islice(nx.shortest_simple_paths(G, source, target, weight=weight), k)
     )
 
-url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
-domain = "http://localhost"
-port = ":5000"
+# url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app"
 
+url = "http://localhost:8080"
 
 # Configure page settings
 st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
 st.sidebar.header("Location Result")
+
+interests = [
+    "architecture", "art", "culture", "heritage", "history",
+    "market", "museum", "nature", "wellness", "ruin", "workshop"
+]
+
+moods = [
+    "roadtrip", "vintage", "romantic", "spiritual", "city explorer",
+    "shopping", "photography", "beach-loving", "sightseeing",
+    "cuisine", "relax", "entertain", "memorial"
+]
 
 def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
     print(start, end)
@@ -100,28 +110,18 @@ button {
     unsafe_allow_html=True,
 )
 
+change_col1, change_col2 = st.columns(2)
 
-interests = [
-    "architecture", "art", "culture", "heritage", "history",
-    "market", "museum", "nature", "wellness", "ruin", "workshop"
-]
+with change_col1:
+    change_interests_select = st.multiselect("Modify your interest", interests, key="interests")
 
-moods = [
-    "roadtrip", "vintage", "romantic", "spiritual", "city explorer",
-    "shopping", "photography", "beach-loving", "sightseeing",
-    "cuisine", "relax", "entertain", "memorial"
-]
-
+with change_col2:
+    change_moods_select = st.multiselect("Modify your moods", moods, key="moods")
+    
 is_moods = st.session_state.get("is_moods", False)
 is_interests = st.session_state.get("is_interests", False)
 moods_select = st.session_state.get("moods_select", [])
 interests_select = st.session_state.get("interests_select", [])
-
-query = {}
-if is_interests:
-    query["interests"] = {"$all": interests_select}
-if is_moods:
-    query["moods"] = {"$all": moods_select}
 
 res_obj = {
     "is_moods": is_moods,
@@ -130,8 +130,38 @@ res_obj = {
     "interests_select": interests_select,
 }
 
-response = requests.post(domain + port + "/ind-loc", json = res_obj)
+# response = requests.post(domain + port + "/ind-loc", json = res_obj)
 response = requests.post(url + "/ind-loc", json = res_obj)
+
+if int(response.json()["length"]) < 8:
+    res_obj = {
+            "moods_select": moods_select,
+            "interests_select": interests_select,
+        }
+    response = requests.post(url + "/alter-ind-loc", json = res_obj)
+
+mod_btn = st.button("Modify")
+
+if mod_btn:
+    change_is_interest = True if len(change_interests_select) > 0 else False
+    change_is_moods = True if len(change_moods_select) > 0 else False
+    print({"is_moods": change_is_moods, "is_interests": change_is_interest,
+                                                       "moods_select": change_moods_select,
+                                                       "interests_select": change_interests_select,})
+    response = requests.post(url + "/ind-loc", json = {"is_moods": change_is_moods, 
+                                                       "is_interests": change_is_interest,
+                                                       "moods_select": change_moods_select,
+                                                       "interests_select": change_interests_select,})
+    
+    if int(response.json()["length"]) < 8:
+        res_obj = {
+                "moods_select": change_moods_select,
+                "interests_select": change_interests_select,
+            }
+        response = requests.post(url + "/alter-ind-loc", json = res_obj)
+
+if "df_display" not in st.session_state:
+    st.session_state["df_display"] = None
 
 df = pd.DataFrame({
     "name": response.json()["names_res"],
@@ -143,6 +173,8 @@ df = pd.DataFrame({
     "node_id": response.json()["node_id"]
 })
 
+st.session_state["df_display"] = df
+
 # Initialize session state for start and end selections
 if "origin_point" not in st.session_state:
     st.session_state["origin_point"] = None
@@ -152,7 +184,6 @@ if "origin_object" not in st.session_state:
     st.session_state["origin_object"] = None
 if "destination_object" not in st.session_state:
     st.session_state["destination_object"] = None
-
 if "interests_can" not in st.session_state:
     st.session_state["interests_can"] = []
 if "moods_can" not in st.session_state:
@@ -164,12 +195,14 @@ def select_candidate_points(line_index):
     line_objects = st.session_state["recommend_routes"][line_index]
     st.session_state["candidate_points"] = line_objects
 
-def display_location_grid(df):
-    card_height = 300
-    num_columns = 5
-    num_rows = len(df)
+def display_location_grid():
+    st.session_state["df_display"] = df
+    print("lennnnnnnnnnnnnnnnnnnn dffffff", len(st.session_state["df_display"]['name']))
+    card_height = 150
+    num_columns = 4
+    num_rows = len(st.session_state["df_display"])
 
-    rows = [df.iloc[i:i + num_columns] for i in range(0, num_rows, num_columns)]
+    rows = [st.session_state["df_display"].iloc[i:i + num_columns] for i in range(0, num_rows, num_columns)]
 
     for row in rows:
         cols = st.columns(num_columns)
@@ -196,7 +229,7 @@ def display_location_grid(df):
 
                 col.markdown(f"""
                         <div id = "item{index}" style="padding: 5px; height: {card_height}px; display: flex; justify-content: left; align-items: left;">
-                            <img src="{img}" style="max-width: 350px; min-width: 350px; min-height: 250px; max-height: 250px;">
+                            <img src="{img}" style="max-width: 220px; min-width: 220px; min-height: 140px; max-height: 140px;">
                         </div>
                 """, unsafe_allow_html=True)
 
@@ -207,16 +240,16 @@ def display_location_grid(df):
                         st.session_state["origin_point"] = name
                         st.session_state["origin_object"] = item
                         if isinstance(st.session_state["destination_point"], str):
-                            recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
+                            recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], st.session_state["df_display"])
                             
                 with col_end:
                     if st.button(f"Set as End", key=f"end_{name}"):
                         st.session_state["destination_point"] = name
                         st.session_state["destination_object"] = item
                         if isinstance(st.session_state["origin_point"], str):
-                            recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
+                            recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], st.session_state["df_display"])
 
-display_location_grid(df)
+display_location_grid()
 
 with st_fixed_container(mode="fixed", position="top", border=True):
     
@@ -299,8 +332,8 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                     # st.session_state["moods_can"] = st.session_state["origin_object"]["moods"] + st.session_state["destination_object"]["moods"]
                     st.experimental_set_query_params(page="map")
                     st.switch_page("pages/map.py")
-                    
-            
+                   
+           
 if go_btn:
     st.session_state["candidate_points"] = [st.session_state["origin_object"], st.session_state["destination_object"]]
     st.session_state["interests_can"] = st.session_state["origin_object"]["interests"] + st.session_state["destination_object"]["interests"]

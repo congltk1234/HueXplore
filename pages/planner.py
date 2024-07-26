@@ -18,6 +18,8 @@ from PIL import Image
 
 st.write("this is planner")
 
+if "final_locations" in st.session_state:
+    final_locations = st.session_state["final_locations"]
 # ox.config(use_cache=True, log_console=True)
 # @st.cache_data(show_spinner=False)
 # def fetch_graphml_data(path='graph.graphml'):
@@ -49,22 +51,23 @@ my_grid.selectbox("Select Country", ["Germany", "Italy", "Japan", "USA"])
 my_grid.text_input("Your name")
 my_grid.button("Send", use_container_width=True)
     # pyautogui.hotkey("ctrl", "p")
-col1, col2 = st.columns(spec=[5,4])
+col1, col2 = st.columns(spec=[4,6])
 
-with col1:
+with col2:
     with st.container():
-        for i in range(4):
-            with st.expander(f"Place {i}", expanded=True):
+        for i, location in enumerate(final_locations):
+            with st.expander(f"Place {i+1}", expanded=True):
                 inside_col1, inside_col2 = st.columns(spec=[2,8])
                 with inside_col1:
-                    st.image('assests/st.png')
+                    st.image(location["img"])
                 with inside_col2:
-                    st.subheader("This is a subheader with a divider", divider="gray")
-                    long_text = "Lorem ipsum. " * 10
+                    st.subheader(location["name"], divider="gray")
+                    long_text = f"Địa điểm thứ {i+1} trong lịch trình"
                     # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
                     st.write(long_text)
 
-with col2:
+
+with col1:
     st_folium(m, width=725, returned_objects=[])
     # đổi sang GoogleMApEngine
 
