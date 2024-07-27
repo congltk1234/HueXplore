@@ -1,5 +1,4 @@
 import streamlit as st
-from pymongo import MongoClient
 import pandas as pd
 from fixed_header import st_fixed_container
 import networkx as nx 

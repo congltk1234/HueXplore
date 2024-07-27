@@ -1,22 +1,23 @@
 import streamlit as st
 import pandas as pd
-# from pymongo import MongoClient
-# from streamlit_sortables_local import sort_items
 import folium
 import json
 from folium import IFrame, plugins
 from streamlit_folium import st_folium
-
+import requests
 import networkx as nx
 import osmnx as ox
 from streamlit_extras.grid import grid
-import streamlit.components.v1 as components
+import pyautogui
+
 
 import io
 from PIL import Image
 
 st.write("this is planner")
-
+url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
+domain = "http://localhost"
+port = ":8080"
 if "final_locations" in st.session_state:
     final_locations = st.session_state["final_locations"]
 # ox.config(use_cache=True, log_console=True)
@@ -38,10 +39,6 @@ if "final_locations" in st.session_state:
 # st.sidebar.header("Tourism Planner")
 
 # st.title("Planner")
-m = folium.Map(location=[39.949610, -75.150282], zoom_start=16)
-folium.Marker(
-    [39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell"
-).add_to(m)
 
 col1, col2 = st.columns(spec=[4,6])
 
@@ -58,7 +55,7 @@ with col2:
                     # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
                     st.write(long_text)
 
-
+start=[16.4683,107.5786]
 with col1:
     st_folium(m, width=725, returned_objects=[])
     # đổi sang GoogleMApEngine
