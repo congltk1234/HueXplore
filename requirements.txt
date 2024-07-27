@@ -7,3 +7,4 @@ shapely
 streamlit_extras
 streamlit_folium
 st-star-rating
+google-generativeai
