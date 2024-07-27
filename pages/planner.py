@@ -9,10 +9,50 @@ import networkx as nx
 import osmnx as ox
 from streamlit_extras.grid import grid
 # from streamlit_star_rating import st_star_rating
+from streamlit_extras.tags import tagger_component
 from utils import *
+
 import io
 from PIL import Image
 import consts
+set_background('assests/bg2.png')
+
+interests_dict = {
+    "Kiến Trúc":"architecture", 
+    "Nghệ Thuật":"art", 
+    "Văn Hóa":"culture", 
+    "Di Sản":'heritage', 
+    "Lịch Sử":'history',
+    "Mua Sắm":'market',
+    "Bảo Tàng":'museum',
+    "Thiên Nhiên":'nature',
+    "Chữa lành":'wellness',
+    "Phế Tích":'ruin',
+    "Workshop":'workshop'
+}
+
+moods_dict = {
+    "Phượt":'roadtrip', 
+    "Cổ kính":'vintage', 
+    "Lãng mạn":'romantic', 
+    "Tâm linh":'spiritual', 
+    "Đường phố":'city explorer',
+    "Mua sắm":'shopping',
+    "Chụp ảnh":'photography',
+    "Biển":'beach-loving',
+    "Ngắm cảnh":'sightseeing',
+    "Ẩm thực":'cuisine',
+    "Thư giãn":'relax',
+    "Giải trí":'entertain',
+    "Tưởng niệm":'memorial'
+}
+
+inv_interests_dict = {v: k for k, v in interests_dict.items()}
+inv_moods_dict = {v: k for k, v in moods_dict.items()}
+
+
+
+
 
 st.write("this is planner")
 
@@ -52,26 +92,82 @@ from json import loads
 with open('res.txt', 'r', encoding='utf-8') as file:
     gen_info = loads(file.read())
 
-st.write(final_locations)
+coords = [i ['coordinate'] for i in final_locations]
+waypoints='waypoints='
+# waypoints='waypoints=optimize:true'
+for i in coords[1:-1]:
+    waypoints += f'{i[0]}%2C{i[1]}%7C'
+waypoints=waypoints[:-3]
+url_apimap=f'https://maps.googleapis.com/maps/api/directions/json?origin={coords[0][0]}%2C{coords[0][1]}&destination={coords[-1][0]}%2C{coords[-1][1]}&{waypoints}&key=AIzaSyAOw2jj-svC4VUqHlM2yMf-pch4mC19YyU'
+
+response = requests.get(url_apimap)
+routes = response.json()
+routes = [{"distance":route['distance'], "duration":route["duration"]} for route in routes['routes'][0]['legs']]
+
+from datetime import datetime, timedelta
+# Adding 2 hours
+set_time = datetime.strptime("07:00", "%H:%M")
+from streamlit_extras.stoggle import stoggle
 with col2:
     with st.container():
         for i, location in enumerate(final_locations):
             index = i+1
+            route_time = timedelta(seconds=0)
+            if i <= len(routes)-1:
+                route_time = timedelta(seconds=routes[i]['duration']['value'])
+                time_est = datetime.strptime("00:00", "%H:%M") + route_time
+                distanc = routes[i]['distance']['value']
+                if distanc > 1000:
+                    distanc = distanc/1000
+                st.caption(f"Ước tính khoảng thời gian di chuyển:{time_est.strftime('%H:%M')} ({round(distanc,2)} km)  ")
+            new_time = set_time + timedelta(hours= location["duration"]) 
+            # if 
             with st.expander(f'**{index}. {location["name"]}**', expanded=True):
-                
-                inside_col1, inside_col2 = st.columns(spec=[2,8])
+                st.write(f'`{set_time.strftime("%H:%M")} ~ {new_time.strftime("%H:%M")}`') 
+                set_time = new_time + route_time
+                long_text = gen_info['Lời dẫn cho từng chặng'][i][0]
+                st.write(long_text)
+                inside_col1, inside_col2 = st.columns(spec=[4,6])
                 with inside_col1:
                     st.image(location["img"])
                 with inside_col2:
-                    long_text = gen_info['Lời dẫn cho từng chặng'][i][0]
-                    st.write(long_text)
+                    if location["price"] =='0':
+                        tagger_component(
+                        "Giá vé", ["Miễn phí"],
+                        color_name=["green"])
+                    else:
+                        st.write(f'Giá vé: {location["price"]}₫')
                     # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
+
+                    interests = [inv_interests_dict[i] for i in location["interests"]]
+                    moods = [inv_moods_dict[i] for i in location["moods"]]
+
+                    tagger_component(
+                        "Tags", interests+moods,
+                        color_name=["orange" for i in range(len(location["interests"]+location["moods"]))],
+                    )
                     st.write(f'{location["vote"]}⭐({location["review"]})')
                     st.write(f'Địa chỉ: [{location["address"]}]({location["gg_map"]})')
+                # st.divider()
+                _,advis,_,cau  = st.columns(spec=[1,4,1,4])
+                with advis:
+                    lst_content = '\n'
                     for _ in gen_info['Tips hữu ích'][i]:
-                        st.markdown("- " + _)
+                        lst_content+=f"\n✅ {_}\n\n"
+                    stoggle(
+                        "**:green[Tips hữu ích!]**",
+                        f""" {lst_content}""",
+                    )
+                with cau:
+                    lst_content = '\n'
                     for _ in gen_info["Lưu ý"][i]:
-                        st.markdown("- " + _)    
+                        lst_content+=f"\n⚠️ {_}\n\n"
+
+                    stoggle(
+                        "Lưu ý!",
+                        f""" {lst_content}""",
+                    )
+                st.write(f'')   
 start=[16.4683,107.5786]
 with col1:
     url = "https://www.google.com/maps/dir"

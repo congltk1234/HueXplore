@@ -9,12 +9,14 @@ from st_draggable_list import DraggableList
 import networkx as nx
 import osmnx as ox
 
-st.markdown("Tourism Planner")
 st.sidebar.header("Tourism Planner")
 import streamlit as st
 import pandas as pd
 import requests
 import consts
+from streamlit_extras.tags import tagger_component
+from utils import *
+set_background('assests/bg2.png')
 
 if "candidate_points" in st.session_state:
     candidates = st.session_state["candidate_points"]
@@ -23,6 +25,61 @@ if "interests_can" in st.session_state:
 if "moods_can" in st.session_state:
     moods_can = st.session_state["moods_can"]
 place_show = st.session_state.get("place_show", [])
+
+interests_dict = {
+    "Kiến Trúc":"architecture", 
+    "Nghệ Thuật":"art", 
+    "Văn Hóa":"culture", 
+    "Di Sản":'heritage', 
+    "Lịch Sử":'history',
+    "Mua Sắm":'market',
+    "Bảo Tàng":'museum',
+    "Thiên Nhiên":'nature',
+    "Chữa lành":'wellness',
+    "Phế Tích":'ruin',
+    "Workshop":'workshop'
+}
+
+moods_dict = {
+    "Phượt":'roadtrip', 
+    "Cổ kính":'vintage', 
+    "Lãng mạn":'romantic', 
+    "Tâm linh":'spiritual', 
+    "Đường phố":'city explorer',
+    "Mua sắm":'shopping',
+    "Chụp ảnh":'photography',
+    "Biển":'beach-loving',
+    "Ngắm cảnh":'sightseeing',
+    "Ẩm thực":'cuisine',
+    "Thư giãn":'relax',
+    "Giải trí":'entertain',
+    "Tưởng niệm":'memorial'
+}
+
+inv_interests_dict = {v: k for k, v in interests_dict.items()}
+inv_moods_dict = {v: k for k, v in moods_dict.items()}
+
+@st.experimental_dialog("Thông tin địa điểm")
+def show_detail(item):
+    st.write(f'Tên địa điểm: {item["name"]}')
+    inside_col1, inside_col2 = st.columns(spec=[4,6])
+    with inside_col1:
+        st.image(item["img"])
+    with inside_col2:
+        if item["price"] =='0':
+            tagger_component(
+            "Giá vé", ["Miễn phí"],
+            color_name=["green"])
+        else:
+            st.write(f'Giá vé: {item["price"]}₫')
+        interests = [inv_interests_dict[i] for i in item["interests"]]
+        moods = [inv_moods_dict[i] for i in item["moods"]]
+        tagger_component(
+            "Tags", interests+moods,
+            color_name=["orange" for i in range(len(item["interests"]+item["moods"]))],
+        )
+        st.write(f'{item["vote"]}⭐({item["review"]})')
+        st.write(f'Địa chỉ: [{item["address"]}]({item["gg_map"]})')
 
 def update_orders(data):
     for index, item in enumerate(data):
@@ -61,7 +118,7 @@ with map_col1:
                     </style>
                     """,unsafe_allow_html=True)
             for dr_index, dr_value in enumerate(st.session_state.data):
-                rv_btn = st.button("Xóa", key=f"remove_{dr_index}")
+                rv_btn = st.button("❌", key=f"remove_{dr_index}")
                 if rv_btn:
                     
                     st.session_state.data.remove(dr_value)
@@ -96,7 +153,7 @@ with map_col1:
         df = df.sort_values(by='isshow', ascending=False)
         st.session_state["place_show"] = df[df['isshow']==True].to_dict(orient='records')
         def display_additional_grid(df):
-            card_height = 80
+            card_height = 100
             num_columns = 4
             num_rows = len(df)
             rows = [df.iloc[i:i + num_columns] for i in range(0, num_rows, num_columns)]
@@ -108,11 +165,12 @@ with map_col1:
                     with col:
                         mark_color = "background: rgba(0, 0, 0, 0.5); color: white;"
                         if item["isshow"]:
-                            mark_color = "background: rgba(0, 0, 0, 0.8); color: red; font-weight: 900"
+                            mark_color = "background: rgba(3, 138, 255, 0.8); color: white; font-weight: 1000"
+                        named = name if len(name) < 16 else name[:15] + "..."
                         st.markdown(f"""
                             <style>
                                 #item{index}::before {{
-                                content: "{name}";
+                                content: "{named}";
                                 font-size: larger;
                                 padding:2px;
                                 position: absolute;
@@ -126,22 +184,23 @@ with map_col1:
                         """,  unsafe_allow_html=True)
                         col.markdown(f"""
                                 <div id = "item{index}" style="padding: 2px; height: {card_height}px; display: flex; justify-content: left; align-items: left;">
-                                    <img src="{img}" style="max-width: 120px; min-width: 120px; min-height: 80px; max-height: 80px;">
+                                    <img src="{img}" style="max-width: 130px; min-width: 130px; min-height: 100px; max-height: 100px;">
                                 </div>
                         """, unsafe_allow_html=True)
-                        add_btn =  st.button(f"Thêm", key=f"add_{name}")
-                        if add_btn:
+                        if st.button(f"📌", key=f"add_{name}"):
                             item_dict = item.to_dict()
                             # st.session_state["candidate_points"].append(item_dict)
                             item_dict["order"] = len(st.session_state.data) + 1
                             st.session_state.data.append(item_dict)
                             st.session_state.data = update_orders(st.session_state.data)
                             st.session_state["candidate_points"] = update_orders(st.session_state.data)
+                        if st.button(f"🔽", key=f"detail_{name}"):
+                            show_detail(item=item)
         display_additional_grid(df)
 import json
 start=[16.4683,107.5786]
 with map_col2:
-    if st.button("Khởi hành"):
+    if st.button("🚀 Khởi hành", use_container_width=True):
         st.session_state["final_locations"] = st.session_state.data
         st.experimental_set_query_params(page="planner")
         st.switch_page("pages/planner.py")

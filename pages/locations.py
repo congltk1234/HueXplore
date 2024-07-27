@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
-from fixed_header import st_fixed_container
 import networkx as nx 
 import osmnx as ox
 from shapely import Point
 import requests
 import consts
-
+from utils import *
+st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
+set_background('assests/bg2.png')
 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.simple_paths.shortest_simple_paths.html
 from itertools import islice
 def k_shortest_paths(G, source, target, k, weight=None):
@@ -15,7 +16,6 @@ def k_shortest_paths(G, source, target, k, weight=None):
     )
 
 # Configure page settings
-st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
 st.sidebar.header("Location Result")
 
 interests = [
@@ -28,6 +28,38 @@ moods = [
     "shopping", "photography", "beach-loving", "sightseeing",
     "cuisine", "relax", "entertain", "memorial"
 ]
+interests_dict = {
+    "Kiến Trúc":"architecture", 
+    "Nghệ Thuật":"art", 
+    "Văn Hóa":"culture", 
+    "Di Sản":'heritage', 
+    "Lịch Sử":'history',
+    "Mua Sắm":'market',
+    "Bảo Tàng":'museum',
+    "Thiên Nhiên":'nature',
+    "Chữa lành":'wellness',
+    "Phế Tích":'ruin',
+    "Workshop":'workshop'
+}
+
+moods_dict = {
+    "Phượt":'roadtrip', 
+    "Cổ kính":'vintage', 
+    "Lãng mạn":'romantic', 
+    "Tâm linh":'spiritual', 
+    "Đường phố":'city explorer',
+    "Mua sắm":'shopping',
+    "Chụp ảnh":'photography',
+    "Biển":'beach-loving',
+    "Ngắm cảnh":'sightseeing',
+    "Ẩm thực":'cuisine',
+    "Thư giãn":'relax',
+    "Giải trí":'entertain',
+    "Tưởng niệm":'memorial'
+}
+
+inv_interests_dict = {v: k for k, v in interests_dict.items()}
+inv_moods_dict = {v: k for k, v in moods_dict.items()}
 
 def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
     print(start, end)
@@ -153,8 +185,32 @@ def select_candidate_points(line_index):
     line_objects = st.session_state["recommend_routes"][line_index]
     st.session_state["candidate_points"] = line_objects
 
+from streamlit_extras.tags import tagger_component
+
+@st.experimental_dialog("Thông tin địa điểm")
+def show_detail(item):
+    st.write(f'Tên địa điểm: {item["name"]}')
+    inside_col1, inside_col2 = st.columns(spec=[4,6])
+    with inside_col1:
+        st.image(item["img"])
+    with inside_col2:
+        if item["price"] =='0':
+            tagger_component(
+            "Giá vé", ["Miễn phí"],
+            color_name=["green"])
+        else:
+            st.write(f'Giá vé: {item["price"]}₫')
+        interests = [inv_interests_dict[i] for i in item["interests"]]
+        moods = [inv_moods_dict[i] for i in item["moods"]]
+        tagger_component(
+            "Tags", interests+moods,
+            color_name=["orange" for i in range(len(item["interests"]+item["moods"]))],
+        )
+        st.write(f'{item["vote"]}⭐({item["review"]})')
+        st.write(f'Địa chỉ: [{item["address"]}]({item["gg_map"]})')
+
 def display_location_grid(df):
-    card_height = 150
+    card_height = 220
     num_columns = 4
     num_rows = len(df)
 
@@ -185,26 +241,37 @@ def display_location_grid(df):
 
                 col.markdown(f"""
                         <div id = "item{index}" style="padding: 5px; height: {card_height}px; display: flex; justify-content: left; align-items: left;">
-                            <img src="{img}" style="max-width: 220px; min-width: 220px; min-height: 140px; max-height: 140px;">
+                            <img src="{img}" style="max-width: 270px; min-width: 270px; min-height: 200px; max-height: 200px;">
                         </div>
                 """, unsafe_allow_html=True)
 
-                col_start, col_end = st.columns(2)
+                col_start, col_detail, col_end = st.columns([3.6,2.8,3.6])
                 
                 with col_start:
-                    if st.button(f"Set as Start", key=f"start_{name}"):
+                    if st.button(f"📌đầu", key=f"start_{name}"):
                         st.session_state["origin_point"] = name
                         st.session_state["origin_object"] = item
                         if isinstance(st.session_state["destination_point"], str):
                             recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
-                            
+                
+                with col_detail:
+                    if st.button(f"🔽", key=f"detail_{name}"):
+                        show_detail(item=item)
                 with col_end:
-                    if st.button(f"Set as End", key=f"end_{name}"):
+                    if st.button(f"📌cuối", key=f"end_{name}"):
                         st.session_state["destination_point"] = name
                         st.session_state["destination_object"] = item
                         if isinstance(st.session_state["origin_point"], str):
                             recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
 
+
+st.markdown("""
+                    <style>
+                    [data-testid=stVerticalBlock] [data-testid=stVerticalBlockBorderWrapper]{
+                        background-color: white;
+                    }
+                    </style>
+                    """,unsafe_allow_html=True)
 
 with st.container():
     
@@ -230,8 +297,8 @@ with st.container():
                         font-weight: 600;
                     }}
                 </style>
-                <p class="origin">Origin: {st.session_state['origin_point']}</p>
-                <p class="destination">Destination: {st.session_state['destination_point']}</p>
+                <p class="origin">Bắt đầu: {st.session_state['origin_point']}</p>
+                <p class="destination">Kết thúc: {st.session_state['destination_point']}</p>
             """, unsafe_allow_html=True,
             )
         go_btn = st.button("Xuất phát")
