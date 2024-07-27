@@ -16,7 +16,7 @@ import streamlit as st
 import pandas as pd
 import requests
 
-url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
+# url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
 domain = "http://localhost"
 port = ":8080"
 
@@ -73,12 +73,17 @@ with map_col1:
             "interests": response.json()["interests_res"],
             "moods": response.json()["moods_res"],
             "isshow": response.json()["isshow_res"],
-            "node_id": response.json()["node_id"]
+            "node_id": response.json()["node_id"],
+            "vote": response.json()["vote"],
+            "review": response.json()["review"],
+            "price": response.json()["price"],
+            "duration": response.json()["duration"],
+            "address": response.json()["address"],
         })
         df = df.sort_values(by='isshow', ascending=False)
         st.session_state["place_show"] = df[df['isshow']==True].to_dict(orient='records')
         def display_additional_grid(df):
-            card_height = 150
+            card_height = 80
             num_columns = 4
             num_rows = len(df)
             rows = [df.iloc[i:i + num_columns] for i in range(0, num_rows, num_columns)]
@@ -108,7 +113,7 @@ with map_col1:
                         """,  unsafe_allow_html=True)
                         col.markdown(f"""
                                 <div id = "item{index}" style="padding: 2px; height: {card_height}px; display: flex; justify-content: left; align-items: left;">
-                                    <img src="{img}" style="max-width: 220px; min-width: 220px; min-height: 140px; max-height: 140px;">
+                                    <img src="{img}" style="max-width: 120px; min-width: 120px; min-height: 80px; max-height: 80px;">
                                 </div>
                         """, unsafe_allow_html=True)
                         add_btn =  st.button(f"Thêm", key=f"add_{name}")
