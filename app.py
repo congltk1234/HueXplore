@@ -1,6 +1,9 @@
 import streamlit as st
 from utils import *
 from streamlit_extras.stylable_container import stylable_container
+import requests
+import consts
+
 st.set_page_config(
     page_title="Hello",
     page_icon="👋",
@@ -11,7 +14,7 @@ set_background('assests/bg.png')
 
 
 
-st.write("# Welcome to Hue! 👋")
+st.write("# 👋")
 import streamlit.components.v1 as components
 
 with st.sidebar.success("Select a trip."):
@@ -23,6 +26,11 @@ with st.sidebar.success("Select a trip."):
     )
 
 st.sidebar.header("Location Result")
+
+init_request = requests.get(consts.domain + "/check-place-dict")
+
+if init_request:
+    st.success("HueXplore đã sẵn sàng đồng hành cùng bạn !")
 
 interests = [
     "🏛️ Kiến Trúc", 

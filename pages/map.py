@@ -14,10 +14,7 @@ st.sidebar.header("Tourism Planner")
 import streamlit as st
 import pandas as pd
 import requests
-
-# url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
-domain = "http://localhost"
-port = ":8080"
+import consts
 
 if "candidate_points" in st.session_state:
     candidates = st.session_state["candidate_points"]
@@ -45,15 +42,32 @@ if "data" not in st.session_state:
 
 map_col1, map_col2 = st.columns([5, 5])
 
-
 with map_col1:
     with st.container():
-        dynamic_list = create_draggable_list()
+        plan_col1, plan_col2 = st.columns([8,2])
+        with plan_col1: 
+            dynamic_list = create_draggable_list()
 
-        if dynamic_list is not None:
-            st.session_state.data = update_orders(dynamic_list)
-        else:
-            dynamic_list = st.session_state.data
+            if dynamic_list is not None:
+                st.session_state.data = update_orders(dynamic_list)
+            else:
+                dynamic_list = st.session_state.data
+        with plan_col2:
+            st.markdown("""
+                    <style>
+                    [data-testid=stVerticalBlockBorderWrapper] [data-testid=stVerticalBlock]{
+                        gap: 0.1rem;
+                    }
+                    </style>
+                    """,unsafe_allow_html=True)
+            for dr_index, dr_value in enumerate(st.session_state.data):
+                rv_btn = st.button("Xóa", key=f"remove_{dr_index}")
+                if rv_btn:
+                    
+                    st.session_state.data.remove(dr_value)
+                    st.session_state.data = update_orders(st.session_state.data)
+                    st.session_state["candidate_points"] = update_orders(st.session_state.data)
+
 
     with st.container(height=800):
         res_obj = {
@@ -62,7 +76,7 @@ with map_col1:
             "name_res": [i["name"] for i in candidates]
         }
         # response = requests.post(url+ "/dynamic-loc", json = res_obj)
-        response = requests.post(domain + port+ "/dynamic-loc", json = res_obj)
+        response = requests.post(consts.domain + "/dynamic-loc", json = res_obj)
 
         df = pd.DataFrame({
             "name": response.json()["names_res"],
@@ -155,7 +169,7 @@ with map_col2:
                 "destination_node": gg_res[index]['node_id'],
                 }
                 # response = requests.post(url + "/find-route", json = res_obj)
-                response = requests.post(domain + port + "/find-route", json = res_obj)
+                response = requests.post(consts.domain + "/find-route", json = res_obj)
                 points_list= response.json()
                 folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
                                 tooltip=f"From a to b", smooth_factor=0.1,).add_to(m)
