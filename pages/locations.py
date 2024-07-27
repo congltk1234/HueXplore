@@ -5,6 +5,7 @@ import networkx as nx
 import osmnx as ox
 from shapely import Point
 import requests
+import consts
 
 # https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.simple_paths.shortest_simple_paths.html
 from itertools import islice
@@ -12,10 +13,6 @@ def k_shortest_paths(G, source, target, k, weight=None):
     return list(
         islice(nx.shortest_simple_paths(G, source, target, weight=weight), k)
     )
-
-# url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app"
-
-url = "http://localhost:8080"
 
 # Configure page settings
 st.set_page_config(page_title="Location Result", page_icon="🌍", layout="wide", initial_sidebar_state='collapsed')
@@ -87,15 +84,6 @@ def recommend_routes(start, end, candidates_df, k=3,leng_path=4):
             break 
     st.session_state["recommend_routes"] = recommend_routes
 
-
-st.markdown(
-    """
-    <div style = "height: 220px">
-    </div>
-""",
-    unsafe_allow_html=True,
-)
-
 st.markdown(
     """
 <style>
@@ -121,14 +109,14 @@ res_obj = {
     "interests_select": interests_select,
 }
 
-response = requests.post(url + "/ind-loc", json = res_obj)
+response = requests.post(consts.domain + "/ind-loc", json = res_obj)
 
 if int(response.json()["length"]) < 8:
     res_obj = {
             "moods_select": moods_select,
             "interests_select": interests_select,
         }
-    response = requests.post(url + "/alter-ind-loc", json = res_obj)
+    response = requests.post(consts.domain + "/alter-ind-loc", json = res_obj)
 
 df = pd.DataFrame({
     "name": response.json()["names_res"],
@@ -217,9 +205,8 @@ def display_location_grid(df):
                         if isinstance(st.session_state["origin_point"], str):
                             recommend_routes(st.session_state["origin_point"], st.session_state["destination_point"], df)
 
-display_location_grid(df)
 
-with st_fixed_container(mode="fixed", position="top", border=True):
+with st.container():
     
     fixed_col1, fixed_col2 = st.columns([2, 8])
 
@@ -300,7 +287,9 @@ with st_fixed_container(mode="fixed", position="top", border=True):
                     # st.session_state["moods_can"] = st.session_state["origin_object"]["moods"] + st.session_state["destination_object"]["moods"]
                     st.experimental_set_query_params(page="map")
                     st.switch_page("pages/map.py")
-                   
+
+with st.container(height=1000):
+    display_location_grid(df)                   
            
 if go_btn:
     st.session_state["candidate_points"] = [st.session_state["origin_object"].to_dict(), st.session_state["destination_object"].to_dict()]

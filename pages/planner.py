@@ -8,15 +8,14 @@ import requests
 import networkx as nx
 import osmnx as ox
 from streamlit_extras.grid import grid
-from streamlit_star_rating import st_star_rating
+# from streamlit_star_rating import st_star_rating
 from utils import *
 import io
 from PIL import Image
+import consts
 
 st.write("this is planner")
-# url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
-domain = "http://localhost"
-port = ":8080"
+
 if "final_locations" in st.session_state:
     final_locations = st.session_state["final_locations"]
 
@@ -91,7 +90,7 @@ with col1:
                 "destination_node": gg_res[index]['node_id'],
                 }
                 # response = requests.post(url + "/find-route", json = res_obj)
-                response = requests.post(domain + port + "/find-route", json = res_obj)
+                response = requests.post(consts.domain + "/find-route", json = res_obj)
                 points_list= response.json()
                 folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
                                 tooltip=f"From a to b", smooth_factor=0.1,).add_to(m)
