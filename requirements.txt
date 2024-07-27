@@ -9,3 +9,4 @@ streamlit_folium
 st-star-rating
 google-generativeai
 streamlit-draggable-list
+streamlit-navigation-bar
