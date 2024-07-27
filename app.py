@@ -25,34 +25,63 @@ with st.sidebar.success("Select a trip."):
 st.sidebar.header("Location Result")
 
 interests = [
-    "🏛️ architecture", 
-    "🎨 art", 
-    "⛩️ culture", 
-    "🛕 heritage", 
-    "⏳ history",
-    "🛒 market",
-    "🏺 museum",
-    "🏞️ nature",
-    "🧘‍♀️ wellness",
-    "🗿 ruin",
-    "🍯 workshop"
+    "🏛️ Kiến Trúc", 
+    "🎨 Nghệ Thuật", 
+    "⛩️ Văn Hóa", 
+    "🛕 Di Sản", 
+    "⏳ Lịch Sử",
+    "🛒 Mua Sắm",
+    "🏺 Bảo Tàng",
+    "🏞️ Thiên Nhiên",
+    "🧘‍♀️ Chữa lành",
+    "🗿 Phế Tích",
+    "🍯 Workshop"
 ]
 
+interests_dict = {
+    "🏛️ Kiến Trúc":"architecture", 
+    "🎨 Nghệ Thuật":"art", 
+    "⛩️ Văn Hóa":"culture", 
+    "🛕 Di Sản":'heritage', 
+    "⏳ Lịch Sử":'history',
+    "🛒 Mua Sắm":'market',
+    "🏺 Bảo Tàng":'museum',
+    "🏞️ Thiên Nhiên":'nature',
+    "🧘‍♀️ Chữa lành":'wellness',
+    "🗿 Phế Tích":'ruin',
+    "🍯 Workshop":'workshop'
+}
+
 moods = [
-    "🛣️ roadtrip", 
-    "📻 vintage", 
-    "💓 romantic", 
-    "🙏 spiritual", 
-    "🏙️ city explorer",
-    "🛍️ shopping",
-    "📸 photography",
-    "🌊 beach-loving",
-    "🌅 sightseeing",
-    "🥖 cuisine",
-    "💆🏻‍♀️ relax",
-    "🎡 entertain",
-    "🪦 memorial"
+    "🛣️ Phượt", 
+    "📻 Cổ kính", 
+    "💓 Lãng mạn", 
+    "🙏 Tâm linh", 
+    "🏙️ Đường phố",
+    "🛍️ Mua sắm",
+    "📸 Chụp ảnh",
+    "🌊 Biển",
+    "🌅 Ngắm cảnh",
+    "🥖 Ẩm thực",
+    "💆🏻‍♀️ Thư giãn",
+    "🎡 Giải trí",
+    "🪦 Tưởng niệm"
 ]
+moods_dict = {
+    "🛣️ Phượt":'roadtrip', 
+    "📻 Cổ kính":'vintage', 
+    "💓 Lãng mạn":'romantic', 
+    "🙏 Tâm linh":'spiritual', 
+    "🏙️ Đường phố":'city explorer',
+    "🛍️ Mua sắm":'shopping',
+    "📸 Chụp ảnh":'photography',
+    "🌊 Biển":'beach-loving',
+    "🌅 Ngắm cảnh":'sightseeing',
+    "🥖 Ẩm thực":'cuisine',
+    "💆🏻‍♀️ Thư giãn":'relax',
+    "🎡 Giải trí":'entertain',
+    "🪦 Tưởng niệm":'memorial'
+}
 
 
 _, select_col1, select_col2,_ = st.columns([1,4,4,1])
@@ -78,6 +107,7 @@ with select_col1:
             }
             """,    ):
             interests_select = st.multiselect("What is your interest", interests, key="interests")
+            interests_select = [interests_dict[i] for i in interests_select]
     
 with select_col2:
         with stylable_container(
@@ -96,7 +126,7 @@ with select_col2:
             }
             """,    ):
             moods_select = st.multiselect("Your moods", moods, key="moods")
-    
+            moods_select = [moods_dict[i] for i in moods_select]
 _, select_col1,_ = st.columns([5,3,3])
 with select_col1:
     with stylable_container(
