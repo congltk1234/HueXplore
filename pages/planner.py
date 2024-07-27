@@ -4,17 +4,20 @@ import folium
 import json
 from folium import IFrame, plugins
 from streamlit_folium import st_folium
-
+import requests
 import networkx as nx
 import osmnx as ox
 from streamlit_extras.grid import grid
+from streamlit_star_rating import st_star_rating
 
 
 import io
 from PIL import Image
 
 st.write("this is planner")
-
+url = "https://huexploreapi-2sc3g5mmrq-uc.a.run.app/"
+domain = "http://localhost"
+port = ":8080"
 if "final_locations" in st.session_state:
     final_locations = st.session_state["final_locations"]
 # ox.config(use_cache=True, log_console=True)
@@ -36,17 +39,12 @@ if "final_locations" in st.session_state:
 # st.sidebar.header("Tourism Planner")
 
 # st.title("Planner")
-m = folium.Map(location=[39.949610, -75.150282], zoom_start=16)
-folium.Marker(
-    [39.949610, -75.150282], popup="Liberty Bell", tooltip="Liberty Bell"
-).add_to(m)
 
-
-my_grid = grid([2, 4, 1], vertical_align="bottom")
-# Row 2:
-my_grid.selectbox("Select Country", ["Germany", "Italy", "Japan", "USA"])
-my_grid.text_input("Your name")
-my_grid.button("Send", use_container_width=True)
+# my_grid = grid([2, 4, 1], vertical_align="bottom")
+# # Row 2:
+# my_grid.selectbox("Select Country", ["Germany", "Italy", "Japan", "USA"])
+# my_grid.text_input("Your name")
+# my_grid.button("Send", use_container_width=True)
     # pyautogui.hotkey("ctrl", "p")
 col1, col2 = st.columns(spec=[4,6])
 
@@ -63,13 +61,42 @@ with col2:
                     # https://docs.streamlit.io/develop/api-reference/write-magic/st.write_stream
                     st.write(long_text)
 
-
+start=[16.4683,107.5786]
 with col1:
-    st_folium(m, width=725, returned_objects=[])
-    # đổi sang GoogleMApEngine
+    m = folium.Map(location=start, zoom_start=10)
+    gg_res= st.session_state["final_locations"] 
+    if len(gg_res)!=0:
+        place_show = st.session_state["place_show"]
+        for index,place in enumerate(gg_res):
+            if index>0:
+                res_obj = {
+                "origin_node": gg_res[index-1]['node_id'],
+                "destination_node": gg_res[index]['node_id'],
+                }
+                # response = requests.post(url + "/find-route", json = res_obj)
+                response = requests.post(domain + port + "/find-route", json = res_obj)
+                points_list= response.json()
+                folium.PolyLine(locations=points_list, color='blue', dash_array='5, 5',
+                                tooltip=f"From a to b", smooth_factor=0.1,).add_to(m)
+            # Define marker variables
+            name = place['name']
+            website = "#"
+            directions = place['gg_map']
+            pub_html = folium.Html(f"""<p style="text-align: center;"><b><span style="font-family: Didot, serif; font-size: 18px;">{name}</b></span></p>
+            <p style="text-align: center;"><img src="{place['img']}" width="220" height="250">
+            <p style="text-align: center;"><a href={website} target="_blank" title="{name} Website"><span style="font-family: Didot, serif; font-size: 14px;">{name} Website</span></a></p>
+            <p style="text-align: center;"><a href={directions} target="_blank" title="Directions to {name}"><span style="font-family: Didot, serif; font-size: 14px;">Directions to {name}</span></a></p>
+            """, script=True)
+            popup = folium.Popup(pub_html, max_width=220)
+            icon = folium.Icon(color='red', prefix='fa',icon=f'{index+1}')
+            folium.Marker(location=place['coordinate'], tooltip=name, icon=icon, popup = popup).add_to(m)
 
-from streamlit_star_rating import st_star_rating
-stars = st_star_rating('Bạn đánh giá lộ trình này như thế nào?', 5, 0, size=60, emoticons=True, read_only=False, dark_theme=False, 
+    folium.FitOverlays().add_to(m)
+    folium.plugins.MiniMap(width=100, height=100).add_to(m)
+    st_data = st_folium(m, width=600, height=400, returned_objects=[])
+
+
+    stars = st_star_rating('Bạn đánh giá lộ trình này như thế nào?', 5, 0, size=60, emoticons=True, read_only=False, dark_theme=False, 
                     #    resetButton=reset_btn, resetLabel=reset_label,
                     #    customCSS=css_custom, on_click=function_to_run_on_click if enable_on_click else None
                        )
