@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-from pymongo import MongoClient
 import folium
 import json
 from folium import IFrame, plugins

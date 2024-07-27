@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-# from pymongo import MongoClient
-# from streamlit_sortables_local import sort_items
 import folium
 import json
 from folium import IFrame, plugins
@@ -10,7 +8,6 @@ from streamlit_folium import st_folium
 import networkx as nx
 import osmnx as ox
 from streamlit_extras.grid import grid
-import pyautogui
 
 
 import io
@@ -92,8 +89,8 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-from PIL import ImageGrab
-im = ImageGrab.grab()
-# Capture a specific region (left, top, right, bottom)
-# screenshot = ImageGrab.grab(bbox=(100, 100, 500, 500))
-st.image(im)
+# from PIL import ImageGrab
+# im = ImageGrab.grab()
+# # Capture a specific region (left, top, right, bottom)
+# # screenshot = ImageGrab.grab(bbox=(100, 100, 500, 500))
+# st.image(im)

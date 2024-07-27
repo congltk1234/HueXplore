@@ -1,4 +1,4 @@
-streamlit
+streamlit==1.36.0
 folium
 networkx
 osmnx
@@ -7,4 +7,3 @@ shapely
 streamlit_extras
 streamlit_folium
 st-star-rating
-st_draggable_list
