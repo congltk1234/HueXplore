@@ -52,13 +52,10 @@ inv_moods_dict = {v: k for k, v in moods_dict.items()}
 
 
 
-
-
-st.write("this is planner")
-
 if "final_locations" in st.session_state:
     final_locations = st.session_state["final_locations"]
-
+if "time_start" in st.session_state:
+    set_time = st.session_state["time_start"]
 col1, col2 = st.columns(spec=[4,6])
 
 describes=[
@@ -106,25 +103,19 @@ routes = [{"distance":route['distance'], "duration":route["duration"]} for route
 
 from datetime import datetime, timedelta
 # Adding 2 hours
-set_time = datetime.strptime("07:00", "%H:%M")
+# set_time = datetime.strptime("07:00", "%H:%M")
+set_time =datetime.strptime(set_time.strftime('%H:%M'), '%H:%M')
 from streamlit_extras.stoggle import stoggle
 with col2:
     with st.container():
         for i, location in enumerate(final_locations):
             index = i+1
             route_time = timedelta(seconds=0)
-            if i <= len(routes)-1:
-                route_time = timedelta(seconds=routes[i]['duration']['value'])
-                time_est = datetime.strptime("00:00", "%H:%M") + route_time
-                distanc = routes[i]['distance']['value']
-                if distanc > 1000:
-                    distanc = distanc/1000
-                st.caption(f"Ước tính khoảng thời gian di chuyển:{time_est.strftime('%H:%M')} ({round(distanc,2)} km)  ")
+
             new_time = set_time + timedelta(hours= location["duration"]) 
             # if 
             with st.expander(f'**{index}. {location["name"]}**', expanded=True):
                 st.write(f'`{set_time.strftime("%H:%M")} ~ {new_time.strftime("%H:%M")}`') 
-                set_time = new_time + route_time
                 long_text = gen_info['Lời dẫn cho từng chặng'][i][0]
                 st.write(long_text)
                 inside_col1, inside_col2 = st.columns(spec=[4,6])
@@ -155,7 +146,7 @@ with col2:
                     for _ in gen_info['Tips hữu ích'][i]:
                         lst_content+=f"\n✅ {_}\n\n"
                     stoggle(
-                        "**:green[Tips hữu ích!]**",
+                        "Tips hữu ích",
                         f""" {lst_content}""",
                     )
                 with cau:
@@ -167,13 +158,28 @@ with col2:
                         "Lưu ý!",
                         f""" {lst_content}""",
                     )
-                st.write(f'')   
+            if i <= len(routes)-1:
+                route_time = timedelta(seconds=routes[i]['duration']['value'])
+                time_est = datetime.strptime("00:00", "%H:%M") + route_time
+                distanc = routes[i]['distance']['value']
+                set_time = new_time + route_time
+                if int(time_est.strftime('%H')) > 0:
+                    time_show =  f"{ time_est.strftime('%H')} giờ {time_est.strftime('%M')} phút"
+                else: 
+                    time_show =  f"{time_est.strftime('%M')} phút"
+                if distanc > 1000:
+                    distanc = distanc/1000
+    
+                    st.caption(f"Ước tính khoảng thời gian di chuyển: {time_show} ({round(distanc,2)} km)  ") 
+                else:
+                    st.caption(f"Ước tính khoảng thời gian di chuyển: {time_show} ({round(distanc,2)} m)  ") 
+
 start=[16.4683,107.5786]
 with col1:
     url = "https://www.google.com/maps/dir"
     for location in final_locations:
         url += "/" + location["name"] +',' + location["address"]
-    st.link_button("Đồng bộ hóa thành công, chuyển đến map", url)
+    st.link_button("🚀 Đồng bộ tuyến đường trên GoogleMap", url, use_container_width=True)
     # stars = st_star_rating('Bạn đánh giá lộ trình này như thế nào?', 5, 0, size=60, emoticons=True, read_only=False, dark_theme=False)
     m = folium.Map(location=start, zoom_start=10)
     gg_res= st.session_state["final_locations"] 
@@ -205,6 +211,4 @@ with col1:
 
     folium.FitOverlays().add_to(m)
     folium.plugins.MiniMap(width=100, height=100).add_to(m)
-    st_data = st_folium(m, width=600, height=400, returned_objects=[])
-
-st.write(final_locations)
+    st_data = st_folium(m, width=500, height=400, returned_objects=[])

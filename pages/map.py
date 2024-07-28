@@ -198,12 +198,15 @@ with map_col1:
                             show_detail(item=item)
         display_additional_grid(df)
 import json
+import datetime
 start=[16.4683,107.5786]
 with map_col2:
-    if st.button("🚀 Khởi hành", use_container_width=True):
+    if st.button("🚀 Lập kế hoạch", use_container_width=True):
         st.session_state["final_locations"] = st.session_state.data
         st.experimental_set_query_params(page="planner")
         st.switch_page("pages/planner.py")
+    st.session_state["time_start"] = st.time_input("Thời gian xuất phát:", datetime.time(7, 00))
+        
     m = folium.Map(location=start, zoom_start=10)
     gg_res=st.session_state.data
 

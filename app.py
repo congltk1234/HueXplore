@@ -3,7 +3,6 @@ from utils import *
 from streamlit_extras.stylable_container import stylable_container
 import requests
 import consts
-from streamlit_navigation_bar import st_navbar
 st.set_page_config(
     page_title="Hello",
     page_icon="👋",
@@ -14,8 +13,8 @@ set_background('assests/bg.png')
 from streamlit_navigation_bar import st_navbar
 styles = {
     "nav": {
-        "background-color": "royalblue",
-        "justify-content": "left",
+        "background-color": "rgb(255 255 255 / 62%)",
+        "justify-content": "center",
     },
     "img": {
         "padding-right": "14px",
@@ -25,7 +24,7 @@ styles = {
         "padding": "14px",
     },
     "active": {
-        "background-color": "white",
+        "background-color": "rgb(255 255 255 / 62%)",
         "color": "var(--text-color)",
         "font-weight": "normal",
         "padding": "14px",
@@ -36,13 +35,10 @@ options = {
     "show_sidebar": False,
 }
 page = st_navbar(
-    [ "UniHack", "GitHub"],
+    [ " ", "   "],
     styles=styles,
     options=options,
 )
-
-
-st.write("# 👋")
 
 init_request = requests.get(consts.domain + "/check-place-dict")
 
